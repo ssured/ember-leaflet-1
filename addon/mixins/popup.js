@@ -1,6 +1,6 @@
 import Ember from 'ember';
 import layout from '../templates/popup';
-const { computed, observer, Mixin, run: { schedule } } = Ember;
+const { computed, observer, Mixin } = Ember;
 
 export default Mixin.create({
 
@@ -25,10 +25,18 @@ export default Mixin.create({
   }),
 
   popupOpenDidChange: observer('popupOpen', function() {
-    if (this.get('popupOpen')) {
-      if (!this._popup._isOpen) { this._layer.openPopup(); }
-    } else {
-      if (this._popup._isOpen) { this._layer.closePopup(); }
+    // compares the state to the previous known state
+    // if it changes, then act accordingly
+    // this code protects for firing more than once
+    let popupOpen = this.get('popupOpen');
+    if (this._popupOpen !== popupOpen) {
+      if (popupOpen) {
+        this._layer.openPopup();
+      }
+      else {
+        this._layer.closePopup();
+      }
+      this._popupOpen = popupOpen;
     }
   }),
 
@@ -54,7 +62,10 @@ export default Mixin.create({
   didCreateLayer() {
     this._super(...arguments);
     if (this.get('hasBlock')) {
-      this._popup = this.L.popup({}, this._layer);
+      this._popup = this.L.popup({
+        // can be removed once https://github.com/Leaflet/Leaflet/pull/4188 is merged
+        closeOnClick: true
+      }, this._layer);
       this._popup.setContent(this.get('destinationElement'));
       this._layer.bindPopup(this._popup);
 
@@ -67,23 +78,23 @@ export default Mixin.create({
   _hijackPopup() {
     let oldOnAdd = this._popup.onAdd;
     this._popup.onAdd = (map) => {
+      oldOnAdd.call(this._popup, map);
       this.set('popupOpen', true);
-      schedule('render', () => {
-        oldOnAdd.call(this._popup, map);
-      });
     };
 
     let oldOnRemove = this._popup.onRemove;
     this._popup.onRemove = (map) => {
-      oldOnRemove.call(this._popup, map);
       this.set('popupOpen', false);
+      oldOnRemove.call(this._popup, map);
     };
   },
 
   willDestroyLayer() {
     this._super(...arguments);
     if (this.get('hasBlock')) {
-      this._layer.closePopup();
+      // if (this._popupOpen) {
+        this._layer.closePopup();
+      // }
       this._layer.unbindPopup();
       delete this._popup;
       delete this._firstNode;
