@@ -1,6 +1,6 @@
 import Ember from 'ember';
 import layout from '../templates/popup';
-const { computed, observer, Mixin } = Ember;
+const { computed, observer, Mixin, run: { schedule } } = Ember;
 
 export default Mixin.create({
 
@@ -32,6 +32,10 @@ export default Mixin.create({
     if (this._popupOpen !== popupOpen) {
       if (popupOpen) {
         this._layer.openPopup();
+        // notify possible content change
+        schedule('afterRender', () => {
+          this._popup.update();
+        });
       }
       else {
         this._layer.closePopup();
