@@ -1,6 +1,6 @@
 import Ember from 'ember';
 import layout from '../templates/popup';
-const { computed, observer, Mixin, run: { schedule } } = Ember;
+const { computed, observer, Mixin, run: { schedule }, $: {extend} } = Ember;
 
 export default Mixin.create({
 
@@ -66,10 +66,10 @@ export default Mixin.create({
   didCreateLayer() {
     this._super(...arguments);
     if (this.get('hasBlock')) {
-      this._popup = this.L.popup({
+      this._popup = this.L.popup(extend({
         // can be removed once https://github.com/Leaflet/Leaflet/pull/4188 is merged
         closeOnClick: true
-      }, this._layer);
+      }, this.get('popupOptions') || {}), this._layer);
       this._popup.setContent(this.get('destinationElement'));
       this._layer.bindPopup(this._popup);
 
