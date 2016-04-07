@@ -35,8 +35,13 @@ test('update map layer using leafletProperties (zoom and center)', function(asse
   this.set('center', locations.chicago);
   this.set('zoom', 14);
 
-  assert.locationsEqual(map._layer.getCenter(), locations.chicago);
-  assert.equal(map._layer.getZoom(), 14);
+  // setting zoom is an animated property
+  var done = assert.async();
+  setTimeout(() => {
+    assert.locationsEqual(map._layer.getCenter(), locations.chicago);
+    assert.equal(map._layer.getZoom(), 14);
+    done();
+  }, 1000);
 });
 
 test('lat/lng changes propagate to the map', function(assert) {
@@ -67,7 +72,12 @@ test('update map layer using leafletProperties (bounds)', function(assert) {
 
   this.set('bounds', [locations.nyc, locations.sf]);
 
-  assert.boundsContain(map._layer.getBounds(), [locations.nyc, locations.sf]);
+  // setting bounds is an animated property
+  var done = assert.async();
+  setTimeout(() => {
+    assert.boundsContain(map._layer.getBounds(), [locations.nyc, locations.sf]);
+    done();
+  }, 1000);
 });
 
 test('map sends actions for events', function(assert) {
